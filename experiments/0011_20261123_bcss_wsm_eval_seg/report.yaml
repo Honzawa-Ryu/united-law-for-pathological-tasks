@@ -1,0 +1,27 @@
+title: BCSS のセグメンテーションの評価
+status: 完了
+purpose: 学習したトンネルのセグメンテーション精度を val / test で測り、DINOv2 + 線形デコーダ（0012）と比べる。
+method: タイルを 10 ステップ生成し、復号した画像の各画素を最も近いクラス色に読み替えて正解マスクと比べた。評価から除く領域（0）は数えない。
+results:
+- 'test（450 タイル）: 画素正解率 0.808、mIoU 0.611、平均 Dice 0.751（出典: outputs/0011_*/bcss_seg_20x__steps6000__bs4__test__ckpt-final/results.json）'
+- 'test のクラス別 IoU: 腫瘍 0.786、間質 0.675、壊死 0.602、炎症 0.594、その他 0.398'
+- 'val（116 タイル）: 1750 ステップで 0.797 / 0.568、6000 ステップで 0.794 / 0.561（画素正解率 / mIoU）'
+- 比較対象の DINOv2 ViT-L + 線形は test で 0.795 / 0.580。WSM が mIoU で 0.03 上、val ではほぼ同じ
+- 推論は 1 タイル 4.3 秒
+figures:
+- path: outputs/0011_20261123_bcss_wsm_eval_seg/bcss_seg_20x__steps6000__bs4__test__ckpt-final/examples/00_TCGA-OL-A66P-DX1_y512_x512.png
+  caption: test の先頭の例。左から 正解 / 予測 / 生成画像そのまま。腫瘍（赤）の広がりは合い、炎症（青）と間質（緑）の位置もおおむね合うが、細かい入り組みは再現されていない
+  representative: true
+- path: outputs/0011_20261123_bcss_wsm_eval_seg/bcss_seg_20x__steps6000__bs4__test__ckpt-final/examples/01_TCGA-E2-A1LK-DX1_y2048_x0.png
+  caption: test の 2 番目の例。正解はほぼ全面が腫瘍だが、予測は間質や壊死を広く出していて大きく外れている
+  representative: true
+chart:
+  title: BCSS test の mIoU（450 タイル）
+  series:
+  - mIoU
+  rows:
+  - - WSM、6000 ステップ
+    - 0.611
+  - - DINOv2 ViT-L + 線形
+    - 0.58
+notes: 例は出力の先頭 2 枚をそのまま載せた（選んでいない）。生成画像にはパレットに無い中間色が出ることがあり、最も近い色に丸めている。

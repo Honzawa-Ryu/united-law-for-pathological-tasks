@@ -1,0 +1,25 @@
+title: H&E 画像とマスクの VAE 往復
+status: 完了
+purpose: FLUX.2 の VAE に H&E 画像とマスク画像を通して戻しても、核などの情報が残るかを学習なしで確かめる。
+method: BRACS val の ROI 中央から 512 px のタイルを 40 / 20 / 10 倍で切り、VAE で符号化・復号した。核マスクはヘマトキシリン成分の大津二値化で代用した。
+results:
+- '40 倍（291 タイル）: PSNR 33.7、SSIM 0.947、核領域の Dice 0.939、マスク往復の Dice 0.9993（出典: outputs/0003_*/40x/results.json）'
+- '20 倍（215 タイル）: PSNR 29.9、SSIM 0.931、核領域の Dice 0.909、マスク往復の Dice 0.9959'
+- '10 倍（88 タイル）: PSNR 27.4、SSIM 0.916、核領域の Dice 0.877、マスク往復の Dice 0.9911'
+- 核マスクは正解注釈ではなく自動二値化の代用。UNI 埋め込みでの比較は未実施
+figures:
+- path: outputs/0003_20261121_vae_roundtrip_he/40x/examples/00_UDH.jpg
+  caption: 左から 元画像 / 再構成 / 核マスク / マスクの再構成（40 倍）。元画像と再構成はほぼ見分けがつかず、細かい斑点を含むマスクも保たれている
+  representative: true
+chart:
+  title: 核領域の Dice（画像を往復させた前後）
+  series:
+  - Dice
+  rows:
+  - - 40 倍
+    - 0.939
+  - - 20 倍
+    - 0.909
+  - - 10 倍
+    - 0.877
+notes: 1 回目（24477）は ROI の PNG に付いた ICC プロファイルが原因で失敗。iCCP を除去して再実行した。

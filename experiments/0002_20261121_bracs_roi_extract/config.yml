@@ -1,0 +1,18 @@
+# 0002: BRACS の WSI と QuPath 注釈（GeoJSON）から ROI を PNG に切り出す
+seed: 42                      # 乱数は使わない（テンプレートの必須キー）
+bracs_dir: /workspace/filesrv02/honzawa/data/bracs
+wsi_dir: wsi_staging          # bracs_dir からの相対。parent で lists/fetch_wsi.sh が置く
+geojson_dir: roi_annotations_geojson
+roi_dir: roi_png              # 出力: roi_png/{split}/{CLASS}/{slide}_{CLASS}_{k}.png
+num_workers: 8
+delete_wsi_after: true        # その WSI の ROI を全部書けたら WSI を消す（容量節約。NAS に原本あり）
+# 注釈のクラス名（小文字化し、ハイフンを空白にしたもの）の先頭一致 → BRACS の 7 クラス。
+# 上から順に判定する（"pathologica" を "benign" より先に）。
+class_prefix_map:
+  - [pathologica, PB]         # Pathological-benign / Pathologica benign / "Pathological-benign (Benign-sure)"
+  - [benign, N]               # Benign-sure / Benign sure / BENIGN
+  - [udh, UDH]
+  - [fea, FEA]
+  - [adh, ADH]
+  - [dcis, DCIS]
+  - [malignant, IC]

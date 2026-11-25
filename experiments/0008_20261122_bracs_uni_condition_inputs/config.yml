@@ -1,0 +1,10 @@
+# 0008: UNI2-h の ROI 特徴を WSM の「特徴ベクトル条件」として渡すための入力を作る
+# 根拠は docs/WSM_TRAINING_RECIPE.md の「特徴ベクトルを条件に足す」。
+# 1) 既存の latent キャッシュを、sample_id を "<元の id>::0-0" に付け替えてコピーする
+#    （特徴条件の経路は NPZ の "{wsv_path}::{frame_key}-{frame_key}" と sample_id を突き合わせるため）
+# 2) 分割ごとの NPZ（audio_feat = UNI 特徴、wsv_path = 元の id、frame_key = "0"）を書く
+seed: 42
+bracs_dir: /workspace/filesrv02/honzawa/data/bracs
+feature_dir: trident_uni_v2
+cache_root: data/wsm_cache
+modalities: ["0_2", "BRACS_Class_Palette"]   # shards のディレクトリ名

@@ -1,0 +1,20 @@
+# 0013: 著者の分類枝（categorical refiner、論文 3.6 節）を BRACS の 7 クラス分類で学習・評価する。
+# 分類器は入力画像（H&E）の VAE latent だけを見る小さな CNN（約 150 万パラメータ）で、トンネルの生成結果は使わない
+# （著者の構成では、生成結果は領域の形を決めるためだけに使う。BRACS は画像全体が 1 クラスなので領域は画像全体）。
+# 学習の設定は著者のスクリプトの既定値のまま。
+cache_root: data/wsm_cache     # 0004 の出力
+run_root: data/wsm_runs
+target_modality: BRACS_Class_Palette
+condition_modality: "0-2"      # H&E の RGB
+channel_head_index: 3
+max_steps: 3000                # 著者の既定
+eval_every: 50                 # 著者の既定。val の balanced accuracy が最良の重みを使う
+classes: [N, PB, UDH, FEA, ADH, DCIS, IC]
+palette:
+  N: [0, 0, 255]
+  PB: [0, 255, 255]
+  UDH: [0, 255, 0]
+  FEA: [255, 255, 0]
+  ADH: [255, 128, 0]
+  DCIS: [255, 0, 0]
+  IC: [255, 0, 255]

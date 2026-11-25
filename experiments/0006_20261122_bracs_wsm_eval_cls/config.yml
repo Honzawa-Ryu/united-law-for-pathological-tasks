@@ -1,0 +1,14 @@
+# 0006: 0005 で学習したトンネルで BRACS の ROI を推論し、色を 7 クラスに読み替えて評価する
+seed: 20260622
+base_model_repo: black-forest-labs/FLUX.2-klein-4B
+cache_root: data/wsm_cache
+run_root: data/wsm_runs
+train_exp: 0005_20261122_bracs_wsm_train_cls
+target_modality: BRACS_Class_Palette
+channel_head_index: 3
+channel_head_rank: 8
+channel_head_alpha: 274
+inference_steps: 10            # 著者の推論設定
+classes: [N, PB, UDH, FEA, ADH, DCIS, IC]   # 混同行列の並び
+num_example_images: 16
+uni_dim: 1536                  # UNI 条件付きの run を評価する場合

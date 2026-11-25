@@ -1,0 +1,10 @@
+# 0001: WSM v1 公開トンネルの推論が A6000 で動くかの確認と計測
+seed: 20260812            # WSMPipeline の既定シード
+num_inference_steps: 10   # README の推論例と同じ
+num_timed_runs: 3         # 1回目（ウォームアップ）を除いて平均する
+model_repo: World-Snapshot/WSM_v1
+# 入力は論文の図に使われた画像（libraries/WSMs/WSM_v1/webui/demo_assets/manifest.json の該当レコード）。
+# 初回（variant 名に __demo が無いもの）は説明図 cover.png を入れてしまい、質の判断に使えない。
+input_images:
+  "dense:000003": libraries/WSMs/WSM_v1/webui/demo_assets/input_visualizations/c98f4fc671749f0d121f.png   # 図15 RGB→法線
+  "dense:000038": libraries/WSMs/WSM_v1/webui/demo_assets/input_visualizations/8c5a48742f0c3b1c8a82.png   # 図20 RGB→意味セグメンテーション

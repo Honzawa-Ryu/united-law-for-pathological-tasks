@@ -1,0 +1,29 @@
+# 0009: BCSS（乳がん組織セグメンテーション、0.25 MPP の ROI 151 枚）を WSM の学習用 latent キャッシュに変換する
+# 入力: ROI を倍率に合わせて縮小し、tile_px 四方に重なりなしで切る。目標: クラス色で塗り分けた画像。
+seed: 42
+bcss_dir: /workspace/filesrv02/honzawa/data/bcss/0_Public-data-Amgad2019_0.25MPP
+tile_px: 512
+base_model_repo: black-forest-labs/FLUX.2-klein-4B
+cache_root: data/wsm_cache        # 出力は cache_root/bcss_seg_{倍率}x/
+target_modality: BCSS_Tissue_Palette
+num_shards: 8
+batch_size: 16
+min_labeled_fraction: 0.5         # ラベル（0 以外）がこの割合に満たないタイルは使わない
+# 分割は施設（TCGA バーコードの 2 つ目の要素）単位。test の施設は BCSS / NuCLS のベースラインで
+# 使われている組（記憶に基づく。https://bcsegmentation.grand-challenge.org/Baseline/ で未確認）。
+test_institutes: [OL, LL, E2, EW, GM, S3]
+val_fraction_of_remaining_slides: 0.15   # 残りのスライドから、名前順に等間隔で val に回す
+# 元の 22 コード → 5 クラス（原論文の主要クラスのまとめ方に倣う。0 は「ROI 外」で評価から除く）
+class_groups:
+  tumor: [1, 19, 20]              # tumor, angioinvasion, dcis
+  stroma: [2]
+  inflammatory: [3, 10, 11]       # lymphocytic_infiltrate, plasma_cells, other_immune_infiltrate
+  necrosis: [4]
+  other: [5, 6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 21]
+palette:                          # クラス色（RGB）。ignore は黒
+  tumor: [255, 0, 0]
+  stroma: [0, 255, 0]
+  inflammatory: [0, 0, 255]
+  necrosis: [255, 255, 0]
+  other: [255, 0, 255]
+  ignore: [0, 0, 0]

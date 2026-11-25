@@ -1,0 +1,21 @@
+title: 公開トンネルの推論の再現と計測
+status: 完了
+purpose: WSM v1 の公開済みトンネルが A6000 で動くか、VRAM と速度がどの程度かを確かめる。
+method: 公開トンネル 2 つ（RGB→法線、RGB→意味セグメンテーション）を、論文の図に使われた入力画像で、サイズ 256 / 480 / 512 px、10 ステップで 3 回ずつ推論した。
+results:
+- 'ピーク VRAM は 14.9 GiB（どの条件も同じ。出典: outputs/0001_*/*__demo/results.json）'
+- 1 枚あたり 256 px で 4.4〜4.5 秒、480 px で 6.9〜7.3 秒、512 px で 7.3〜7.8 秒（2 回目以降の平均。可視化の書き出しを含む）
+- 初回の読み込みは 81 秒、2 回目以降は 2〜9 秒（ジョブ 24405 のログ）
+- 意味セグメンテーションはライオンの領域を切り出し、分類枝は領域 1 個にクラス 23、確信度 0.97 を付けた。標準の result.png は真っ黒になるので generated_pseudo_rgb_*.png を見る必要がある
+- variant 名に __demo が無い 4 件は入力が説明図で、質の判断には使えない
+figures:
+- path: outputs/0001_20261121_wsm_infer_smoke/dense-000003__480__demo/input.png
+  caption: 入力（論文の図 15 の画像）。机を囲む 3 人の写真
+  representative: true
+- path: outputs/0001_20261121_wsm_infer_smoke/dense-000003__480__demo/result.png
+  caption: RGB→法線の出力。人物の輪郭と机の面が出ている。カラーマップ表示で、通常の RGB 法線マップの見た目ではない
+  representative: true
+- path: outputs/0001_20261121_wsm_infer_smoke/dense-000038__480__demo/input.png
+  caption: 意味セグメンテーションの入力（ライオンの写真）
+notes: 1 回目（24265）は wsg_reader サブモジュール未取得で失敗。サブモジュールを取得して再実行した。失敗でも sacct は COMPLETED と出る。
+chart: null

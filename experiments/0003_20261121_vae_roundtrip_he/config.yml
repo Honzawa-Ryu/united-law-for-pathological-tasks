@@ -1,0 +1,9 @@
+# 0003: H&E 画像と核マスクを FLUX.2 VAE に往復させ、情報が残るかを測る（学習なし）
+seed: 42
+bracs_roi_dir: /workspace/filesrv02/honzawa/data/bracs/roi_png
+split: val                    # 312 ROI。各 ROI の中央から 1 タイル
+tile_px: 512                  # VAE に入れるタイルの一辺
+base_model_repo: black-forest-labs/FLUX.2-klein-4B   # data/hf_cache にあるものを使う（local_files_only）
+batch_size: 8
+num_example_images: 12        # 目視用に保存する枚数
+min_tissue_fraction: 0.2      # 組織がこれ未満のタイルは除く（白背景ばかりだと PSNR が高く出る）

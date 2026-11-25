@@ -1,0 +1,2 @@
+title: "united-law-for-pathological-tasks 進捗"
+goal: "World Snapshot Models（WSM、凍結した FLUX.2 Klein 4B にタスクごとの小さな追加部品を学習させる方式）が H&E 病理画像で実用になるかを、BRACS の ROI 分類と BCSS の組織セグメンテーションで、UNI2-h や DINOv2 と比べて確かめる。"

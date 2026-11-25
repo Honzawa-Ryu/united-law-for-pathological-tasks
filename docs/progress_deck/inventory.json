@@ -1,0 +1,490 @@
+{
+ "title": "united-law-for-pathological-tasks 進捗",
+ "goal": "World Snapshot Models（WSM、凍結した FLUX.2 Klein 4B にタスクごとの小さな追加部品を学習させる方式）が H&E 病理画像で実用になるかを、BRACS の ROI 分類と BCSS の組織セグメンテーションで、UNI2-h や DINOv2 と比べて確かめる。",
+ "repo": "united-law-for-pathological-tasks",
+ "experiments": [
+  {
+   "id": "0001",
+   "date": "2026-11-21",
+   "name": "0001_20261121_wsm_infer_smoke",
+   "title": "公開トンネルの推論の再現と計測",
+   "status": "完了",
+   "purpose": "WSM v1 の公開済みトンネルが A6000 で動くか、VRAM と速度がどの程度かを確かめる。",
+   "method": "公開トンネル 2 つ（RGB→法線、RGB→意味セグメンテーション）を、論文の図に使われた入力画像で、サイズ 256 / 480 / 512 px、10 ステップで 3 回ずつ推論した。",
+   "results": [
+    "ピーク VRAM は 14.9 GiB（どの条件も同じ。出典: outputs/0001_*/*__demo/results.json）",
+    "1 枚あたり 256 px で 4.4〜4.5 秒、480 px で 6.9〜7.3 秒、512 px で 7.3〜7.8 秒（2 回目以降の平均。可視化の書き出しを含む）",
+    "初回の読み込みは 81 秒、2 回目以降は 2〜9 秒（ジョブ 24405 のログ）",
+    "意味セグメンテーションはライオンの領域を切り出し、分類枝は領域 1 個にクラス 23、確信度 0.97 を付けた。標準の result.png は真っ黒になるので generated_pseudo_rgb_*.png を見る必要がある",
+    "variant 名に __demo が無い 4 件は入力が説明図で、質の判断には使えない"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0001_20261121_wsm_infer_smoke/dense-000003__480__demo/input.png",
+     "caption": "入力（論文の図 15 の画像）。机を囲む 3 人の写真",
+     "representative": true
+    },
+    {
+     "path": "outputs/0001_20261121_wsm_infer_smoke/dense-000003__480__demo/result.png",
+     "caption": "RGB→法線の出力。人物の輪郭と机の面が出ている。カラーマップ表示で、通常の RGB 法線マップの見た目ではない",
+     "representative": true
+    },
+    {
+     "path": "outputs/0001_20261121_wsm_infer_smoke/dense-000038__480__demo/input.png",
+     "caption": "意味セグメンテーションの入力（ライオンの写真）"
+    }
+   ],
+   "chart": null,
+   "notes": "1 回目（24265）は wsg_reader サブモジュール未取得で失敗。サブモジュールを取得して再実行した。失敗でも sacct は COMPLETED と出る。",
+   "filled": true,
+   "n_figures_total": 20
+  },
+  {
+   "id": "0002",
+   "date": "2026-11-21",
+   "name": "0002_20261121_bracs_roi_extract",
+   "title": "BRACS の WSI と注釈から ROI を切り出す",
+   "status": "完了",
+   "purpose": "NAS に BRACS の ROI 画像セットが無かったので、WSI と QuPath の注釈から ROI 画像を作る。",
+   "method": "QuPath 0.5.1 で .qpdata 387 件を GeoJSON に変換し、注釈の外接矩形をレベル 0（40 倍、0.25 µm/px）で PNG に切り出した。WSI は NAS から分割ごとに転送し、切り出し後に削除した。",
+   "results": [
+    "ROI は 4540 枚: train 3658 / val 312 / test 570（公式は 3657 / 312 / 570。出典: outputs/0002_*/{train,val,test}/results.json）",
+    "train のクラス別: PB 715、DCIS 665、FEA 624、IC 521、UDH 389、ADH 386、N 358",
+    "容量は train 31 GB、val 2.8 GB、test 5.0 GB。置き場は /workspace/filesrv02/honzawa/data/bracs/roi_png/",
+    "注釈のクラス名に表記ゆれがあり、先頭一致で 7 クラスに対応付けた。両方の名前が付いた 1 個（Pathological-benign (Benign-sure)）は PB に入れた",
+    "openslide の画像をそのまま PNG にすると ICC プロファイルが付き PIL で読めなくなる。保存時に外し、val / test の 882 枚は後から iCCP チャンクだけ除去した"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0002_20261121_bracs_roi_extract/examples/BRACS_1368_DCIS_4.png",
+     "caption": "val の DCIS の ROI（1370×1397 px）。異型細胞で埋まった乳管が写っている",
+     "representative": true
+    },
+    {
+     "path": "outputs/0002_20261121_bracs_roi_extract/examples/BRACS_1886_N_1.png",
+     "caption": "val の N の ROI（1066×1087 px）。正常な小葉が写っている",
+     "representative": true
+    }
+   ],
+   "chart": null,
+   "notes": "例の 2 枚は data/bracs/roi_png から写したもの。切り出しは外接矩形で、多角形の外側の組織も含む。公式の ROI 画像と同じ切り方かは未確認。",
+   "filled": true,
+   "n_figures_total": 2
+  },
+  {
+   "id": "0003",
+   "date": "2026-11-21",
+   "name": "0003_20261121_vae_roundtrip_he",
+   "title": "H&E 画像とマスクの VAE 往復",
+   "status": "完了",
+   "purpose": "FLUX.2 の VAE に H&E 画像とマスク画像を通して戻しても、核などの情報が残るかを学習なしで確かめる。",
+   "method": "BRACS val の ROI 中央から 512 px のタイルを 40 / 20 / 10 倍で切り、VAE で符号化・復号した。核マスクはヘマトキシリン成分の大津二値化で代用した。",
+   "results": [
+    "40 倍（291 タイル）: PSNR 33.7、SSIM 0.947、核領域の Dice 0.939、マスク往復の Dice 0.9993（出典: outputs/0003_*/40x/results.json）",
+    "20 倍（215 タイル）: PSNR 29.9、SSIM 0.931、核領域の Dice 0.909、マスク往復の Dice 0.9959",
+    "10 倍（88 タイル）: PSNR 27.4、SSIM 0.916、核領域の Dice 0.877、マスク往復の Dice 0.9911",
+    "核マスクは正解注釈ではなく自動二値化の代用。UNI 埋め込みでの比較は未実施"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0003_20261121_vae_roundtrip_he/40x/examples/00_UDH.jpg",
+     "caption": "左から 元画像 / 再構成 / 核マスク / マスクの再構成（40 倍）。元画像と再構成はほぼ見分けがつかず、細かい斑点を含むマスクも保たれている",
+     "representative": true
+    }
+   ],
+   "chart": {
+    "title": "核領域の Dice（画像を往復させた前後）",
+    "series": [
+     "Dice"
+    ],
+    "rows": [
+     [
+      "40 倍",
+      0.939
+     ],
+     [
+      "20 倍",
+      0.909
+     ],
+     [
+      "10 倍",
+      0.877
+     ]
+    ]
+   },
+   "notes": "1 回目（24477）は ROI の PNG に付いた ICC プロファイルが原因で失敗。iCCP を除去して再実行した。",
+   "filled": true,
+   "n_figures_total": 36
+  },
+  {
+   "id": "0004",
+   "date": "2026-11-22",
+   "name": "0004_20261122_bracs_wsm_latent_cache",
+   "title": "BRACS の ROI を WSM の学習用 latent に変換",
+   "status": "完了",
+   "purpose": "BRACS の分類を「画像→画像」として WSM に学習させるための入力（latent キャッシュ）を作る。",
+   "method": "ROI の中央から視野（10 倍は 2048 px、20 倍は 1024 px 四方）を切り、足りない分は白で埋めて 512 px に縮小した。目標はクラスの色で全面を塗った画像。両方を FLUX.2 の VAE で符号化し、shard に保存した。",
+   "results": [
+    "4540 枚（train 3658 / val 312 / test 570）を変換。latent は [4540, 32, 1, 64, 64]、bfloat16（出典: outputs/0004_*/{10x,20x}/results.json）",
+    "10 倍: 視野より小さい ROI が 72%、組織の割合は平均 0.50",
+    "20 倍: 視野より小さい ROI が 29%、組織の割合は平均 0.73",
+    "著者の変換スクリプトは使わず、分割（split）を確実に書くため shard を直接書いた"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0004_20261122_bracs_wsm_latent_cache/20x/examples/01_IC.jpg",
+     "caption": "左が入力タイル（20 倍、IC）、右が目標（IC の色で全面を塗った画像）",
+     "representative": true
+    }
+   ],
+   "chart": null,
+   "notes": "",
+   "filled": true,
+   "n_figures_total": 16
+  },
+  {
+   "id": "0005",
+   "date": "2026-11-22",
+   "name": "0005_20261122_bracs_wsm_train_cls",
+   "title": "BRACS の分類トンネルの学習",
+   "status": "完了",
+   "purpose": "WSM のトンネルを BRACS の 7 クラス分類（RGB → クラス色の画像）で学習できるか、どの条件で安定するかを確かめる。",
+   "method": "学習スクリプトを直接呼び、凍結した FLUX.2 Klein 4B に LoRA rank 8（学習対象 1250 万パラメータ）を学習させた。倍率、バッチサイズ、ステップ数、補助損失、UNI2-h 特徴の条件追加を変えて 13 通り実行した。",
+   "results": [
+    "バッチ 1 は約 3.1 秒/ステップ、VRAM 18 GB。バッチ 4 は約 5.3 秒/ステップ、VRAM 44 GB（A6000 の上限。出典: outputs/0005_*/*/results.json）",
+    "検証損失はどの条件も 0.140〜0.145 で横ばいになり、分類の精度を反映しなかった（精度は 0006 を参照）",
+    "バッチ 1 は 250 ステップ違うだけで val の正解率が 0.19 ↔ 0.35 と揺れた。バッチ 4 は延長で伸び続けた",
+    "UNI2-h の ROI 特徴は、音声条件用の経路で条件トークン / 変調として渡せた（学習対象 1270 万 / 3610 万パラメータ）",
+    "横取り 2 回、ホストメモリ不足 1 回、制限時間切れ 2 回。いずれも保存済みの状態から再開した"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0005_20261122_bracs_wsm_train_cls/bracs_cls_20x__steps9000__bs4/stats.png",
+     "caption": "20 倍・バッチ 4・9000 ステップの学習曲線。学習損失は最初の数百ステップで 0.5 前後まで下がり、その後はほぼ横ばい。検証損失も 0.14 付近で平らなまま",
+     "representative": true
+    }
+   ],
+   "chart": null,
+   "notes": "再開用の状態は検証損失が改善したときだけ保存される。制限時間で切られると、最後に改善した時点まで戻る。",
+   "filled": true,
+   "n_figures_total": 14
+  },
+  {
+   "id": "0006",
+   "date": "2026-11-22",
+   "name": "0006_20261122_bracs_wsm_eval_cls",
+   "title": "BRACS の分類の評価",
+   "status": "完了",
+   "purpose": "学習したトンネルの分類精度を val / test で測り、UNI2-h の線形分類（0007）と比べる。",
+   "method": "学習済みトンネルで ROI を 10 ステップ生成し、復号した画像の各画素を最も近いクラス色に読み替えて多数決で 1 クラスに決めた。条件は val（312 枚）で選び、test（570 枚）は各モデル 1 回。",
+   "results": [
+    "test の macro-F1: WSM 20 倍 + UNI 9000 ステップ 0.570、WSM 10 倍 9000 ステップ 0.557、WSM 20 倍 9000 ステップ 0.545（いずれもバッチ 4。出典: outputs/0006_*/*__test__ckpt-final/results.json）",
+    "比較対象の UNI2-h + 線形は test の macro-F1 0.573（範囲 1024）/ 0.600（範囲 2048）。WSM は並ぶが上回らない",
+    "val の macro-F1 は バッチ 1・3000 ステップで 0.406、バッチ 4・3000 ステップで 0.535、バッチ 4・9000 ステップで 0.598（10 倍）",
+    "推論はシードに対して安定（同じモデルを 3 シードで評価して正解率 0.458 が一致）。1 枚 4.7 秒",
+    "生成画像はほぼ単色（最多色が画素の 99%）。誤りは色の読み替えではなく、どの色を出すかの判断にある"
+   ],
+   "figures": [],
+   "chart": {
+    "title": "BRACS test の macro-F1（570 枚）",
+    "series": [
+     "macro-F1"
+    ],
+    "rows": [
+     [
+      "UNI2-h + 線形（範囲 2048）",
+      0.6
+     ],
+     [
+      "UNI2-h + 線形（範囲 1024）",
+      0.573
+     ],
+     [
+      "WSM 20 倍 + UNI、9000",
+      0.57
+     ],
+     [
+      "WSM 10 倍、9000",
+      0.557
+     ],
+     [
+      "WSM 20 倍、9000",
+      0.545
+     ],
+     [
+      "WSM 10 倍 + UNI、3000",
+      0.525
+     ],
+     [
+      "WSM 10 倍、3000",
+      0.499
+     ]
+    ]
+   },
+   "notes": "倍率の優劣は val と test で入れ替わり、決められない。どのモデルも test は val より 0.04〜0.10 低い。既報値との比較はしていない。",
+   "filled": true,
+   "n_figures_total": 384
+  },
+  {
+   "id": "0007",
+   "date": "2026-11-22",
+   "name": "0007_20261122_bracs_uni_roi_probe",
+   "title": "比較対象: UNI2-h + ロジスティック回帰（BRACS）",
+   "status": "完了",
+   "purpose": "WSM の分類と比べる基準として、病理の基盤モデル UNI2-h の特徴に線形分類器を載せた場合の精度を測る。",
+   "method": "NAS にあった UNI2-h のパッチ埋め込み（TRIDENT、20 倍 256 px）のうち、ROI の範囲に中心が入るパッチを平均し、L2 正規化・標準化してロジスティック回帰にかけた。C は val の macro-F1 で選んだ。",
+   "results": [
+    "範囲 1024 px（WSM の 20 倍入力と同じ）: val 0.692 / 0.673、test 0.590 / 0.573（正解率 / macro-F1。出典: outputs/0007_*/field1024/results.json）",
+    "範囲 2048 px（WSM の 10 倍入力と同じ）: val 0.657 / 0.647、test 0.611 / 0.600",
+    "ROI 全体: val 0.647 / 0.635、test 0.609 / 0.600",
+    "test のクラス別 F1（ROI 全体）: IC 0.92、N 0.71、FEA 0.71、DCIS 0.62、PB 0.47、UDH 0.45、ADH 0.32",
+    "C はどの条件も格子の下端 0.01 が選ばれた。調整が粗く、もう少し上がる可能性がある"
+   ],
+   "figures": [],
+   "chart": {
+    "title": "UNI2-h + 線形の macro-F1",
+    "series": [
+     "val",
+     "test"
+    ],
+    "rows": [
+     [
+      "範囲 1024 px",
+      [
+       0.673,
+       0.573
+      ]
+     ],
+     [
+      "範囲 2048 px",
+      [
+       0.647,
+       0.6
+      ]
+     ],
+     [
+      "ROI 全体",
+      [
+       0.635,
+       0.6
+      ]
+     ]
+    ]
+   },
+   "notes": "パッチは WSI の格子上にあり ROI に位置合わせされていない。パッチ中心が 1 つも入らない ROI が 29 個あり、最も近いパッチで代用した。h5py は .venv に無く data/pydeps から読んでいる。",
+   "filled": true,
+   "n_figures_total": 0
+  },
+  {
+   "id": "0008",
+   "date": "2026-11-22",
+   "name": "0008_20261122_bracs_uni_condition_inputs",
+   "title": "UNI 特徴を WSM の条件にするための入力作成",
+   "status": "完了",
+   "purpose": "UNI2-h の ROI 特徴を、WSM の「特徴ベクトル条件」の経路に渡せる形にする。",
+   "method": "既存の latent キャッシュを、サンプル ID を「<元の ID>::0-0」に付け替えてコピーし、分割ごとの NPZ（UNI 特徴 1536 次元、WSM の入力と同じ範囲のパッチ平均）を書いた。",
+   "results": [
+    "bracs_cls_10x_uni（範囲 2048 px）と bracs_cls_20x_uni（範囲 1024 px）を作成。各 4540 件（出典: outputs/0008_*/*/results.json）",
+    "パッチ中心が入らない ROI は 29 個（最も近いパッチで代用）",
+    "学習スクリプトの --inference-only は変換層を読み込まないため、tools/patches/apply_wsm_projector_patch.py で読み込み処理を足した"
+   ],
+   "figures": [],
+   "chart": null,
+   "notes": "特徴条件の経路は分割情報を見ず、NPZ に入っている ID がそのまま対象になる。val の NPZ を省くと train が検証に使われる。",
+   "filled": true,
+   "n_figures_total": 0
+  },
+  {
+   "id": "0009",
+   "date": "2026-11-23",
+   "name": "0009_20261123_bcss_wsm_latent_cache",
+   "title": "BCSS を WSM の学習用 latent に変換",
+   "status": "完了",
+   "purpose": "組織セグメンテーション（BCSS）を WSM に学習させるための入力を作る。",
+   "method": "ROI 151 枚を 20 倍相当（0.5 µm/px）に縮小し、512 px のタイルに重なりなしで切った。22 コードを 5 クラスにまとめ、クラスの色で塗り分けた画像を目標にした。分割は施設単位。",
+   "results": [
+    "タイル 1591 枚: train 1025（91 スライド）/ val 116（15）/ test 450（44）（出典: outputs/0009_*/20x/results.json）",
+    "画素の割合: 腫瘍 0.378、間質 0.342、炎症 0.121、壊死 0.061、その他 0.052、評価から除く領域 0.047",
+    "Google Drive で取れなかったマスク 1 枚は figshare から取得。元の倍率（7622×4738）だったので画像の大きさ（6313×3924）に最近傍で合わせた",
+    "test の施設の組（OL、LL、E2、EW、GM、S3）は記憶に基づく指定で、公式ベースラインのページでは未確認"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0009_20261123_bcss_wsm_latent_cache/20x/examples/00.jpg",
+     "caption": "左が入力タイル（20 倍）、右が目標。腫瘍の胞巣が赤、周囲の間質が緑で塗られ、組織の境界と一致している",
+     "representative": true
+    }
+   ],
+   "chart": null,
+   "notes": "1 回目（24886）はマスクと画像の大きさの不一致で失敗。失敗しても COMPLETED 扱いになり、afterok で予約した学習が壊れたキャッシュで起動した。",
+   "filled": true,
+   "n_figures_total": 8
+  },
+  {
+   "id": "0010",
+   "date": "2026-11-23",
+   "name": "0010_20261123_bcss_wsm_train_seg",
+   "title": "BCSS のセグメンテーショントンネルの学習",
+   "status": "完了",
+   "purpose": "WSM のトンネルを組織セグメンテーション（RGB → クラス色で塗り分けた画像）で学習する。",
+   "method": "0005 と同じ処理で、対象だけ BCSS のタイル（20 倍、train 1025 枚）に替えた。バッチ 4、6000 ステップ。",
+   "results": [
+    "学習は 8 時間 49 分、ピーク VRAM 43.8 GB（出典: outputs/0010_*/bcss_seg_20x__steps6000__bs4/results.json）",
+    "検証損失は 0.160（250 ステップ）→ 0.146（5500 ステップ）",
+    "val の mIoU は 1750 ステップで 0.568、6000 ステップで 0.561 と伸びなかった（評価は 0011）"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0010_20261123_bcss_wsm_train_seg/bcss_seg_20x__steps6000__bs4/stats.png",
+     "caption": "学習曲線。学習損失は最初の数百ステップで 0.6 前後まで下がり、その後は緩やかに 0.55 付近へ。検証損失は 0.15 付近でほぼ平ら",
+     "representative": true
+    }
+   ],
+   "chart": null,
+   "notes": "横取りされうる枠（x-large-creator-extra）で走ったが、打ち切りは起きなかった。",
+   "filled": true,
+   "n_figures_total": 1
+  },
+  {
+   "id": "0011",
+   "date": "2026-11-23",
+   "name": "0011_20261123_bcss_wsm_eval_seg",
+   "title": "BCSS のセグメンテーションの評価",
+   "status": "完了",
+   "purpose": "学習したトンネルのセグメンテーション精度を val / test で測り、DINOv2 + 線形デコーダ（0012）と比べる。",
+   "method": "タイルを 10 ステップ生成し、復号した画像の各画素を最も近いクラス色に読み替えて正解マスクと比べた。評価から除く領域（0）は数えない。",
+   "results": [
+    "test（450 タイル）: 画素正解率 0.808、mIoU 0.611、平均 Dice 0.751（出典: outputs/0011_*/bcss_seg_20x__steps6000__bs4__test__ckpt-final/results.json）",
+    "test のクラス別 IoU: 腫瘍 0.786、間質 0.675、壊死 0.602、炎症 0.594、その他 0.398",
+    "val（116 タイル）: 1750 ステップで 0.797 / 0.568、6000 ステップで 0.794 / 0.561（画素正解率 / mIoU）",
+    "比較対象の DINOv2 ViT-L + 線形は test で 0.795 / 0.580。WSM が mIoU で 0.03 上、val ではほぼ同じ",
+    "推論は 1 タイル 4.3 秒"
+   ],
+   "figures": [
+    {
+     "path": "outputs/0011_20261123_bcss_wsm_eval_seg/bcss_seg_20x__steps6000__bs4__test__ckpt-final/examples/00_TCGA-OL-A66P-DX1_y512_x512.png",
+     "caption": "test の先頭の例。左から 正解 / 予測 / 生成画像そのまま。腫瘍（赤）の広がりは合い、炎症（青）と間質（緑）の位置もおおむね合うが、細かい入り組みは再現されていない",
+     "representative": true
+    },
+    {
+     "path": "outputs/0011_20261123_bcss_wsm_eval_seg/bcss_seg_20x__steps6000__bs4__test__ckpt-final/examples/01_TCGA-E2-A1LK-DX1_y2048_x0.png",
+     "caption": "test の 2 番目の例。正解はほぼ全面が腫瘍だが、予測は間質や壊死を広く出していて大きく外れている",
+     "representative": true
+    }
+   ],
+   "chart": {
+    "title": "BCSS test の mIoU（450 タイル）",
+    "series": [
+     "mIoU"
+    ],
+    "rows": [
+     [
+      "WSM、6000 ステップ",
+      0.611
+     ],
+     [
+      "DINOv2 ViT-L + 線形",
+      0.58
+     ]
+    ]
+   },
+   "notes": "例は出力の先頭 2 枚をそのまま載せた（選んでいない）。生成画像にはパレットに無い中間色が出ることがあり、最も近い色に丸めている。",
+   "filled": true,
+   "n_figures_total": 48
+  },
+  {
+   "id": "0012",
+   "date": "2026-11-23",
+   "name": "0012_20261123_bcss_frozen_encoder_linear_seg",
+   "title": "比較対象: 凍結エンコーダ + 線形デコーダ（BCSS）",
+   "status": "完了（UNI2-h は取得できず未実施）",
+   "purpose": "WSM のセグメンテーションと比べる基準として、凍結した ViT の特徴に線形の層を載せた場合の精度を測る。",
+   "method": "0009 と同じタイル・分割・正解で、ViT のパッチ特徴（入力 518 px、37×37 トークン）に 1×1 畳み込みを載せて 40 エポック学習し、val の mIoU が最良のエポックを採用した。",
+   "results": [
+    "DINOv2 ViT-L/14: val 0.783 / 0.569、test 0.795 / 0.580（画素正解率 / mIoU）、test の平均 Dice 0.727（出典: outputs/0012_*/dinov2_vitl14/results.json）",
+    "test のクラス別 IoU: 腫瘍 0.749、間質 0.676、炎症 0.541、壊死 0.534、その他 0.402",
+    "学習は 4 分、特徴抽出は 0.066 秒/タイル。最良エポックが最終の 40 で、延ばせば上がる可能性がある",
+    "UNI2-h は認証エラー（401）で取得できなかった。計算ノードに Hugging Face のトークンが無い"
+   ],
+   "figures": [],
+   "chart": {
+    "title": "DINOv2 ViT-L + 線形（BCSS）",
+    "series": [
+     "val",
+     "test"
+    ],
+    "rows": [
+     [
+      "画素正解率",
+      [
+       0.783,
+       0.795
+      ]
+     ],
+     [
+      "mIoU",
+      [
+       0.569,
+       0.58
+      ]
+     ]
+    ]
+   },
+   "notes": "UNI2-h との比較は、トークンか重みの場所が分かれば ENCODER=uni2h で再実行するだけ。",
+   "filled": true,
+   "n_figures_total": 0
+  },
+  {
+   "id": "0013",
+   "date": "2026-11-25",
+   "name": "0013_20261125_bracs_wsm_categorical_refiner",
+   "title": "著者の分類枝（VAE 潜在表現 + 小さな CNN）で BRACS を分類",
+   "status": "完了",
+   "purpose": "WSM の論文（3.6 節）が分類に使っている構成を BRACS の 7 クラス分類にそのまま当て、色の多数決方式や UNI2-h + 線形と比べる。",
+   "method": "著者の分類器（約 154 万パラメータの CNN）を、H&E 画像の FLUX.2 VAE 潜在表現を入力にして、著者のスクリプトの既定値（3000 ステップ、50 ステップごとに val、balanced accuracy 最良の重みを採用）で学習した。10 倍と 20 倍、各 3 シード。この分類器はトンネルも生成結果も使わない。著者のコードは分割をハッシュで作り直すので、公式分割を使うよう修正した。",
+   "results": [
+    "10 倍: val 0.523 / 0.498、test 0.426 / 0.400（正解率 / macro-F1、3 シードの平均。出典: outputs/0013_*/bracs_cls_10x__seed*/results.json）",
+    "20 倍: val 0.450 / 0.422、test 0.415 / 0.382",
+    "test の macro-F1 の幅: 10 倍 0.382〜0.429、20 倍 0.380〜0.384",
+    "色の多数決方式（test macro-F1 0.545〜0.570）と UNI2-h + 線形（0.573〜0.600）より 0.15〜0.2 低い",
+    "学習損失は下限近くまで下がるが val の損失は 1.4〜1.5 で、学習データに過適合している。最良の重みは 100〜2300 ステップとばらつく"
+   ],
+   "figures": [],
+   "chart": {
+    "title": "test の macro-F1（BRACS、570 枚）",
+    "series": [
+     "test"
+    ],
+    "rows": [
+     [
+      "著者の分類枝 20 倍",
+      [
+       0.382
+      ]
+     ],
+     [
+      "著者の分類枝 10 倍",
+      [
+       0.4
+      ]
+     ],
+     [
+      "色の多数決 10 倍 9000 ステップ",
+      [
+       0.557
+      ]
+     ],
+     [
+      "UNI2-h + 線形（範囲 2048）",
+      [
+       0.6
+      ]
+     ]
+    ]
+   },
+   "notes": "60 回の val 評価から最良を選ぶので、val の値は楽観的に出る（test との差が大きい）。学習は 1 本 3 分ほどで、GPU は 1 枚。",
+   "filled": true,
+   "n_figures_total": 0
+  }
+ ]
+}

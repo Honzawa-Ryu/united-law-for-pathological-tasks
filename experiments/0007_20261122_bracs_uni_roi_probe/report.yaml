@@ -1,0 +1,27 @@
+title: '比較対象: UNI2-h + ロジスティック回帰（BRACS）'
+status: 完了
+purpose: WSM の分類と比べる基準として、病理の基盤モデル UNI2-h の特徴に線形分類器を載せた場合の精度を測る。
+method: NAS にあった UNI2-h のパッチ埋め込み（TRIDENT、20 倍 256 px）のうち、ROI の範囲に中心が入るパッチを平均し、L2 正規化・標準化してロジスティック回帰にかけた。C は val の macro-F1 で選んだ。
+results:
+- '範囲 1024 px（WSM の 20 倍入力と同じ）: val 0.692 / 0.673、test 0.590 / 0.573（正解率 / macro-F1。出典: outputs/0007_*/field1024/results.json）'
+- '範囲 2048 px（WSM の 10 倍入力と同じ）: val 0.657 / 0.647、test 0.611 / 0.600'
+- 'ROI 全体: val 0.647 / 0.635、test 0.609 / 0.600'
+- 'test のクラス別 F1（ROI 全体）: IC 0.92、N 0.71、FEA 0.71、DCIS 0.62、PB 0.47、UDH 0.45、ADH 0.32'
+- C はどの条件も格子の下端 0.01 が選ばれた。調整が粗く、もう少し上がる可能性がある
+chart:
+  title: UNI2-h + 線形の macro-F1
+  series:
+  - val
+  - test
+  rows:
+  - - 範囲 1024 px
+    - - 0.673
+      - 0.573
+  - - 範囲 2048 px
+    - - 0.647
+      - 0.6
+  - - ROI 全体
+    - - 0.635
+      - 0.6
+notes: パッチは WSI の格子上にあり ROI に位置合わせされていない。パッチ中心が 1 つも入らない ROI が 29 個あり、最も近いパッチで代用した。h5py は .venv に無く data/pydeps から読んでいる。
+figures: []

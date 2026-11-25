@@ -1,0 +1,38 @@
+{
+ "url": "https://claude.ai/artifact/NkuqruCAec8efMUFv5Gmrr",
+ "blobs": {
+  "0217548b5eee0ac3": "cbae1519997d9011be6e81044e587ce5",
+  "0344727b29b059bf": "d95f2baf5cb0b080d88b73b44d772ee9",
+  "1fc7d7436c540f12": "ddaab67345a96492e54aadb0b3c1de84",
+  "244ccf193dfc62e1": "5b89352a1fd9f959f9b2eee08b4b930b",
+  "40a7bff70357f1e0": "c044b2bee810f612510b607d6bcf95ea",
+  "6dab9a3dfd9ded49": "12150f73ef93a5f8a76213326706603d",
+  "7282b9e704e58202": "243d9b8e296ff2ecb5a1325e74a26319",
+  "a2af212c2ba7f676": "debacbb6d7fb18a37df9f576b18be8e1",
+  "b8cd4ce1f908fe7b": "9cd607558e74a13d8e440266622dc124",
+  "ce2a9708078f1a74": "828595a9ab8efa98c68caaafc5adc1ad",
+  "efe0c6aa012bf2de": "c8f0cab5f0351147105ae5559411be74"
+ },
+ "published": {
+  "project/deck.json": "4426612ec7d015e1d327e35daca2e76a1646dabb",
+  "project/slides/cover.html": "5952ed6d0c79218e8f2e0b63c9e790cd180a802c",
+  "project/slides/overview-1.html": "f0f7409f2208c7ccd051644a08262dd4fa20941c",
+  "project/slides/exp-0001.html": "dbd9e700503f37e05d02b327a60048442704a02f",
+  "project/slides/exp-0002.html": "f1c15e8313b854d8e75ca428a9eeb0ebdf11aa0a",
+  "project/slides/exp-0003.html": "7c22f93642ae953ebf0ce8001c8feb5e91fc0a2c",
+  "project/slides/exp-0004.html": "c793a795849b6430a303799116b98b3fbe557534",
+  "project/slides/exp-0005.html": "ab5fd2094dcd181387483bbbe69ede9caf1ceea4",
+  "project/slides/exp-0006.html": "621fc85da0bf6bef3ecdd79c0d5329be23901689",
+  "project/slides/exp-0007.html": "a09852d9851db6d0dd3e85108f7ee7ed53a34571",
+  "project/slides/exp-0008.html": "696c23ccb472ea3e8bd515c8200aa2bc68747a54",
+  "project/slides/exp-0009.html": "ff329755888d29849a3b1de9464ba98b03740326",
+  "project/slides/exp-0010.html": "cfc75d1c182bd204282833105233503c774f71df",
+  "project/slides/exp-0011.html": "421bd07c38eb2d2503912a7367d7f87698ce6c9d",
+  "project/slides/exp-0012.html": "847c7be2a48c6a25161fe957cc748e068381112a",
+  "project/slides/exp-0013.html": "bcd3c89c4ffafdedbd7cf9745ddb76fb0e08d7da"
+ },
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-24T04:43:12Z"
+ }
+}

@@ -1,0 +1,14 @@
+title: BCSS のセグメンテーショントンネルの学習
+status: 完了
+purpose: WSM のトンネルを組織セグメンテーション（RGB → クラス色で塗り分けた画像）で学習する。
+method: 0005 と同じ処理で、対象だけ BCSS のタイル（20 倍、train 1025 枚）に替えた。バッチ 4、6000 ステップ。
+results:
+- '学習は 8 時間 49 分、ピーク VRAM 43.8 GB（出典: outputs/0010_*/bcss_seg_20x__steps6000__bs4/results.json）'
+- 検証損失は 0.160（250 ステップ）→ 0.146（5500 ステップ）
+- val の mIoU は 1750 ステップで 0.568、6000 ステップで 0.561 と伸びなかった（評価は 0011）
+figures:
+- path: outputs/0010_20261123_bcss_wsm_train_seg/bcss_seg_20x__steps6000__bs4/stats.png
+  caption: 学習曲線。学習損失は最初の数百ステップで 0.6 前後まで下がり、その後は緩やかに 0.55 付近へ。検証損失は 0.15 付近でほぼ平ら
+  representative: true
+notes: 横取りされうる枠（x-large-creator-extra）で走ったが、打ち切りは起きなかった。
+chart: null

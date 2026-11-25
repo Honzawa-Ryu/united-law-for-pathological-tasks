@@ -1,0 +1,20 @@
+# 0004: BRACS の ROI を WSM の学習用 latent キャッシュ（shards）に変換する
+# 入力: ROI の中央から field_px（40 倍の px）四方を切り、足りない分は白で埋め、tile_px に縮小。
+# 目標: クラスの色で全面を塗った画像（分類を「画像→画像」に書き換えたもの）。
+seed: 42
+bracs_roi_dir: /workspace/filesrv02/honzawa/data/bracs/roi_png
+tile_px: 512
+base_model_repo: black-forest-labs/FLUX.2-klein-4B   # data/hf_cache のものを使う
+cache_root: data/wsm_cache        # PROJECT_ROOT からの相対。出力は cache_root/bracs_cls_{倍率}x/
+target_modality: BRACS_Class_Palette
+num_shards: 8
+batch_size: 16
+# クラスの色（RGB）。互いに離れた原色・二次色。復号は最も近い色の多数決。
+palette:
+  N: [0, 0, 255]
+  PB: [0, 255, 255]
+  UDH: [0, 255, 0]
+  FEA: [255, 255, 0]
+  ADH: [255, 128, 0]
+  DCIS: [255, 0, 0]
+  IC: [255, 0, 255]

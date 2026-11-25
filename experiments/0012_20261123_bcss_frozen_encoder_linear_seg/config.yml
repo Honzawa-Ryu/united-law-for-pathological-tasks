@@ -1,0 +1,17 @@
+# 0012: 比較対象。凍結した ViT のパッチ特徴に 1×1 畳み込み（線形）を載せ、BCSS の 5 クラスを画素単位で分類する。
+# タイル・分割・正解は WSM の実験（0009 のキャッシュ）と同じものを使う。
+seed: 42
+bcss_dir: /workspace/filesrv02/honzawa/data/bcss/0_Public-data-Amgad2019_0.25MPP
+cache_dir: data/wsm_cache/bcss_seg_20x    # samples.csv、gt/、palette.json を読む（PROJECT_ROOT からの相対）
+tile_px: 512
+input_px: 518                 # パッチ 14 px の倍数（37×37 トークン）
+scale: 2                      # 0.25 MPP → 0.5 MPP（0009 の 20 倍と同じ）
+feature_batch_size: 16
+epochs: 40
+lr: 1.0e-3
+weight_decay: 1.0e-4
+batch_size: 32
+eval_every_epochs: 2          # val の mIoU が最良のエポックを採用
+encoders:                     # timm のモデル名と追加引数
+  dinov2_vitl14: {name: "vit_large_patch14_dinov2.lvd142m", kwargs: {}}
+  uni2h: {name: "hf-hub:MahmoodLab/UNI2-h", kwargs: uni2h}   # 取得に Hugging Face の承認とトークンが要る

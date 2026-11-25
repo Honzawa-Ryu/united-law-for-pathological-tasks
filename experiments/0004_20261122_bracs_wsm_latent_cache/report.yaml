@@ -1,0 +1,15 @@
+title: BRACS の ROI を WSM の学習用 latent に変換
+status: 完了
+purpose: BRACS の分類を「画像→画像」として WSM に学習させるための入力（latent キャッシュ）を作る。
+method: ROI の中央から視野（10 倍は 2048 px、20 倍は 1024 px 四方）を切り、足りない分は白で埋めて 512 px に縮小した。目標はクラスの色で全面を塗った画像。両方を FLUX.2 の VAE で符号化し、shard に保存した。
+results:
+- '4540 枚（train 3658 / val 312 / test 570）を変換。latent は [4540, 32, 1, 64, 64]、bfloat16（出典: outputs/0004_*/{10x,20x}/results.json）'
+- '10 倍: 視野より小さい ROI が 72%、組織の割合は平均 0.50'
+- '20 倍: 視野より小さい ROI が 29%、組織の割合は平均 0.73'
+- 著者の変換スクリプトは使わず、分割（split）を確実に書くため shard を直接書いた
+figures:
+- path: outputs/0004_20261122_bracs_wsm_latent_cache/20x/examples/01_IC.jpg
+  caption: 左が入力タイル（20 倍、IC）、右が目標（IC の色で全面を塗った画像）
+  representative: true
+chart: null
+notes: ''

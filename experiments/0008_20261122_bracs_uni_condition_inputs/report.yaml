@@ -1,0 +1,11 @@
+title: UNI 特徴を WSM の条件にするための入力作成
+status: 完了
+purpose: UNI2-h の ROI 特徴を、WSM の「特徴ベクトル条件」の経路に渡せる形にする。
+method: 既存の latent キャッシュを、サンプル ID を「<元の ID>::0-0」に付け替えてコピーし、分割ごとの NPZ（UNI 特徴 1536 次元、WSM の入力と同じ範囲のパッチ平均）を書いた。
+results:
+- 'bracs_cls_10x_uni（範囲 2048 px）と bracs_cls_20x_uni（範囲 1024 px）を作成。各 4540 件（出典: outputs/0008_*/*/results.json）'
+- パッチ中心が入らない ROI は 29 個（最も近いパッチで代用）
+- 学習スクリプトの --inference-only は変換層を読み込まないため、tools/patches/apply_wsm_projector_patch.py で読み込み処理を足した
+notes: 特徴条件の経路は分割情報を見ず、NPZ に入っている ID がそのまま対象になる。val の NPZ を省くと train が検証に使われる。
+figures: []
+chart: null

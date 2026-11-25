@@ -1,0 +1,8 @@
+# 0007: 比較対象。NAS にあった UNI2-h のパッチ埋め込み（TRIDENT、20 倍 256 px、重なりなし）を
+# ROI ごとに平均し、ロジスティック回帰で 7 クラス分類する。分割は公式（WSM の実験と同じ）。
+seed: 42
+bracs_dir: /workspace/filesrv02/honzawa/data/bracs
+feature_dir: trident_uni_v2      # {Group}/{Type}/20x_256px_0px_overlap/features_uni_v2/{slide}.h5
+classes: [N, PB, UDH, FEA, ADH, DCIS, IC]
+c_grid: [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]   # val の macro-F1 で選ぶ
+max_iter: 5000

@@ -1,0 +1,20 @@
+# 0005: BRACS の分類（RGB → クラス色で塗った画像）のトンネルを WSM v1 で学習する
+# 手順の根拠は docs/WSM_TRAINING_RECIPE.md。
+seed: 20260622                 # 学習スクリプトの既定
+base_model_repo: black-forest-labs/FLUX.2-klein-4B
+cache_root: data/wsm_cache     # 0004 の出力（PROJECT_ROOT からの相対）
+run_root: data/wsm_runs        # 学習の出力（チェックポイント）。ジョブをまたいで再開するので scratch に置かない
+target_modality: BRACS_Class_Palette
+channel_head_index: 3          # custom の 000000〜000002 は著者が使用済み
+channel_head_rank: 8
+channel_head_alpha: 274        # 著者のランチャの既定（学習スクリプトの既定は rank と同じ 8）
+learning_rate: 1.0e-4
+categorical_num_clusters: 7    # 補助損失を使う場合の k-means のクラスタ数（クラス数に合わせる）
+num_workers: 4
+eval_every_steps: 250          # 検証は約 70 秒。改善したときだけチェックポイントが残る
+viz_every_steps: 100000        # 途中のプレビューは出さない（開始時の preflight と終了時のみ）
+val_loss_batches: 24
+early_stop_seconds: 100000     # 検証損失は早く頭打ちになるが分類精度は伸び続けるので、早期終了は実質無効にする
+preview_num_samples: 4
+gpu_poll_seconds: 5            # nvidia-smi で VRAM を記録する間隔
+uni_dim: 1536                  # UNI2-h の特徴次元（--uni を使う場合）

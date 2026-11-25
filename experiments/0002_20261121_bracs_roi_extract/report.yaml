@@ -1,0 +1,19 @@
+title: BRACS の WSI と注釈から ROI を切り出す
+status: 完了
+purpose: NAS に BRACS の ROI 画像セットが無かったので、WSI と QuPath の注釈から ROI 画像を作る。
+method: QuPath 0.5.1 で .qpdata 387 件を GeoJSON に変換し、注釈の外接矩形をレベル 0（40 倍、0.25 µm/px）で PNG に切り出した。WSI は NAS から分割ごとに転送し、切り出し後に削除した。
+results:
+- 'ROI は 4540 枚: train 3658 / val 312 / test 570（公式は 3657 / 312 / 570。出典: outputs/0002_*/{train,val,test}/results.json）'
+- 'train のクラス別: PB 715、DCIS 665、FEA 624、IC 521、UDH 389、ADH 386、N 358'
+- 容量は train 31 GB、val 2.8 GB、test 5.0 GB。置き場は /workspace/filesrv02/honzawa/data/bracs/roi_png/
+- 注釈のクラス名に表記ゆれがあり、先頭一致で 7 クラスに対応付けた。両方の名前が付いた 1 個（Pathological-benign (Benign-sure)）は PB に入れた
+- openslide の画像をそのまま PNG にすると ICC プロファイルが付き PIL で読めなくなる。保存時に外し、val / test の 882 枚は後から iCCP チャンクだけ除去した
+figures:
+- path: outputs/0002_20261121_bracs_roi_extract/examples/BRACS_1368_DCIS_4.png
+  caption: val の DCIS の ROI（1370×1397 px）。異型細胞で埋まった乳管が写っている
+  representative: true
+- path: outputs/0002_20261121_bracs_roi_extract/examples/BRACS_1886_N_1.png
+  caption: val の N の ROI（1066×1087 px）。正常な小葉が写っている
+  representative: true
+notes: 例の 2 枚は data/bracs/roi_png から写したもの。切り出しは外接矩形で、多角形の外側の組織も含む。公式の ROI 画像と同じ切り方かは未確認。
+chart: null

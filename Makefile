@@ -11,7 +11,8 @@
 	clean_failed \
 	preflight \
 	jupyter \
-	review
+	review \
+	progress_deck
 
 # =========================================================
 # 0. Initial setup
@@ -46,7 +47,7 @@ uv_sync:
 		echo "  make uv_sync p=<partition>                  # base のみ"; \
 		echo "  make uv_sync p=<partition> extras=\"llm chem\""; \
 		echo "  make uv_sync p=<partition> extras=all        # 全extra"; \
-		echo "Available extras: llm, chem, nlp"; \
+		echo "Available extras: llm, chem, nlp, wsm, patho"; \
 		exit 1; \
 	fi
 
@@ -185,3 +186,12 @@ jupyter:
 
 preflight:
 	@python3 -m scripts.preflight_check
+
+# =========================================================
+# 9. Progress slides (experiments/*/report.yaml → docs/progress_deck/build)
+#    軽い集計なので preflight と同じくホストの python3 で実行する
+#    （pyyaml と pillow が必要）。公開は Claude の progress-deck skill が行う。
+# =========================================================
+
+progress_deck:
+	@python3 tools/progress_deck/progress_deck.py build
